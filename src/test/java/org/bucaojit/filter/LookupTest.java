@@ -60,7 +60,7 @@ public class LookupTest extends TestCase {
 		qf.setSlot(5, slot5);
 		qf.setSlot(7, slot7);
 		
-		int found = qf.lookup(4, (short)5);
+		int found = qf.lookup(4, 5);
 		
 		System.out.println("The value found is: " + found);
 		Assert.assertEquals(5, found);

@@ -2,20 +2,17 @@ package org.bucaojit.filter;
 
 public class Utils {
 	
-	public static short getQuotient(Object obj) {
-		Integer hashcode = obj.hashCode();
-		hashcode = hashcode >> 16;
-		hashcode = Math.abs(hashcode);
-		return hashcode.shortValue();
+	public static int getQuotient(long hash) {
+		hash = Math.abs(hash);
+		return (int) hash >>> 32;
 	}
 	
-	public static short getRemainder(Object obj) {
-		Integer hashcode = obj.hashCode();
-		return hashcode.shortValue();
+	public static int getRemainder(long hash) {
+		return (int) hash;
 	}
-	
-	public static int getIndex(Object obj, int size) {
-		return getQuotient(obj)%size;
+
+	public static int getIndex(long hash, int size) {
+		return getQuotient(hash) % size;
 	}
 
 }

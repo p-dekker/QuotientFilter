@@ -3,76 +3,57 @@ package org.bucaojit.filter;
 import java.util.BitSet;
 
 public class MetadataBitSet implements Metadata{
-	private final int OCCUPIED_BIT = 0;
-	private final int CONTINUATION_BIT = 1;
-	private final int SHIFTED_BIT = 2;
+	private final int OCCUPIED_BIT = 1;
+	private final int CONTINUATION_BIT = 2;
+	private final int SHIFTED_BIT = 4;
 	
-	private BitSet metadata;
+	private byte metadata;
 	
 	public MetadataBitSet() {
-		this.metadata = new BitSet(3);	
-		this.metadata.clear();
-	}
-	
-	public MetadataBitSet(BitSet metadata) {
-		this.metadata = new BitSet(3);
-		this.metadata.and(metadata);
+		this.metadata = 0;
 	}
 	
 	public MetadataBitSet(MetadataBitSet metadata) {
-		this.metadata = new BitSet(3);
-		this.metadata.and(metadata.getMetadataSet());
+		this.metadata = metadata.metadata;
 	}
 	
-	public BitSet getMetadataSet() {
-		return this.metadata;
+	public boolean getOccupied() { return (metadata & OCCUPIED_BIT) == OCCUPIED_BIT;
 	}
 	
-	public void setMetadata(BitSet metadata) {
-		this.metadata.and(metadata);
+	public boolean getShifted() {
+		return (metadata & SHIFTED_BIT) == SHIFTED_BIT;
 	}
 	
-	public Boolean getOccupied() {
-		return metadata.get(OCCUPIED_BIT);
+	public boolean getContinuation() {
+		return (metadata & CONTINUATION_BIT) == CONTINUATION_BIT;
 	}
-	
-	public Boolean getShifted() {
-		return metadata.get(SHIFTED_BIT);
-	}
-	
-	public Boolean getContinuation() {
-		return metadata.get(CONTINUATION_BIT);
-	}
-	
+
 	public void setOccupied() {
-		metadata.set(OCCUPIED_BIT);
+		metadata = (byte) (metadata | OCCUPIED_BIT);
 	}
 	
 	public void setContinuation() {
-		metadata.set(CONTINUATION_BIT);
+		metadata = (byte) (metadata | CONTINUATION_BIT);
 	}
 	
 	public void setShifted() {
-		metadata.set(SHIFTED_BIT);
+		metadata = (byte) (metadata | SHIFTED_BIT);
 	}
 	
 	public void clearOccupied() {
-		metadata.clear(OCCUPIED_BIT);
+		metadata = (byte) (metadata & (~OCCUPIED_BIT));
 	}
 	
 	public void clearContinuation() {
-		metadata.clear(CONTINUATION_BIT);
+		metadata = (byte) (metadata & (~CONTINUATION_BIT));
 	}
 	
 	public void clearShifted() {
-		metadata.clear(SHIFTED_BIT);
+		metadata = (byte) (metadata & (~SHIFTED_BIT));
 	}
 	
-	public Boolean isClear() {
-		//if (this.metadata.and(set))
-		if(this.metadata.isEmpty()) 
-			return true;
-		return false;
+	public boolean isClear() {
+		return (metadata & (OCCUPIED_BIT + CONTINUATION_BIT + SHIFTED_BIT)) == 0;
 	}
 
 }

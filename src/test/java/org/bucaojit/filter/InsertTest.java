@@ -21,34 +21,40 @@ public class InsertTest extends TestCase{
 	public  void testApp() {
 		QuotientFilter qf = new QuotientFilter(75);
 		try {
-			qf.insert(new String("value"));
+			qf.insert("value".hashCode());
 			qf.printQF();
-			qf.insert(new String("second value"));
+			qf.insert("second value".hashCode());
 			qf.printQF();
-			qf.insert(new Long(343443));
+			qf.insert(343443L);
 			qf.printQF();
-			qf.insert(new Integer(444));
+			qf.insert(343443L);
 			qf.printQF();
-			qf.insert(new Integer(23));
+			qf.insert(444L);
 			qf.printQF();
-			qf.insert(new String("343443"));
+			qf.insert(23L);
 			qf.printQF();
-			
+
 			System.out.println("Checking for 'value'");
-			int output = qf.lookup(new String("value"));
+			int output = qf.getNumberOfOccurences("value".hashCode());
 			System.out.println("The value output: " + output);
-			Assert.assertEquals(58, output);
+			Assert.assertEquals(1, output);
 			
-			int outputSecond = qf.lookup(new Integer(23));
+			int outputSecond = qf.getNumberOfOccurences(23L);
 			System.out.println("The 23 output: " + outputSecond);
-			//Assert.assertEquals(23, outputSecond);
+			Assert.assertEquals(1, outputSecond);
 			
-			int outputThird = qf.lookup(new Integer(444));
+			int outputThird = qf.getNumberOfOccurences(444L);
 			System.out.println("The 4444 output: " + outputThird);
-			//Assert.assertEquals(1, outputThird);
+			Assert.assertEquals(1, outputThird);
 			
-			int outputFourth = qf.lookup(new String("Not Exists"));
+			int outputFourth = qf.getNumberOfOccurences("Not Exists".hashCode());
 			System.out.println("The 'Not Exists' output: " + outputFourth);
+			Assert.assertEquals(0, outputFourth);
+
+			int outputFifth= qf.getNumberOfOccurences(343443L);
+			System.out.println("The 44343443 output: " + outputFifth);
+			Assert.assertEquals(2, outputFifth);
+
 			
 		}
 		catch(Exception e) {

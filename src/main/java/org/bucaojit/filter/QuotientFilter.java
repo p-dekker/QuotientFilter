@@ -32,25 +32,20 @@ import org.apache.log4j.BasicConfigurator;
 
 public class QuotientFilter {
     private static final Log LOG = LogFactory.getLog(QuotientFilter.class);
-	private final int DEFAULT_SIZE = 1000;
+	private static final int DEFAULT_SIZE = 1000;
     private int qfSize;
-	protected ArrayList<Slot> set;
+	private Slot[] set;
 	protected int capacity;
 	
 	public QuotientFilter() {
-	    LOG.info("Created QuotientFilter of size: " + DEFAULT_SIZE);
-		this.set = new ArrayList<Slot>(DEFAULT_SIZE);
-		for(int i = 0; i < DEFAULT_SIZE; i++) 
-			this.set.add(new Slot());
-		this.capacity = DEFAULT_SIZE;
-		this.qfSize = 0;
+	    this(DEFAULT_SIZE);
 	}
 	
 	public QuotientFilter(int size) {
 	    LOG.info("Created QuotientFilter of size: " + size);
-		this.set = new ArrayList<Slot>(size);
+		this.set = new Slot[size];
 		for(int i = 0; i < size; i++) 
-			this.set.add(new Slot());
+			this.set[i] = new Slot();
 		this.capacity = size;
         this.qfSize = 0;
 	}
@@ -68,24 +63,20 @@ public class QuotientFilter {
     }
 	
 	public void setSlot(int index, Slot slot) {
-		this.set.set(index, slot);
+		this.set[index] = slot;
 	}
-	
-	protected ArrayList<Slot> getSet() {
-		return set;
-	}
-	
-	public void insert(Object obj) throws Exception{	
+
+	public void insert(long hash) throws Exception{
 		
 		if(isFull()) {
 			throw new IOException("ERROR: Quotient Filter has reached capacity");
 		}
-		int index = Utils.getIndex(obj, getCapacity());
-		Slot currentSlot = set.get(index);
-	    short remainder = Utils.getRemainder(obj);
+		int index = Utils.getIndex(hash, getCapacity());
+		Slot currentSlot = set[index];
+	    int remainder = Utils.getRemainder(hash);
         
 		if(!currentSlot.getMetadata().getOccupied()) {		
-			currentSlot.setRemainder(Utils.getRemainder(obj));		 
+			currentSlot.setRemainder(Utils.getRemainder(hash));
 
 			Metadata md = new MetadataBitSet();
 			md.setOccupied();
@@ -96,7 +87,7 @@ public class QuotientFilter {
 			int foundIndex;
 			foundIndex = lookup(index, remainder);
 			if(foundIndex != -1) { 
-				throw new IOException("Object already exists");
+				currentSlot.increase();
 			}
 			else {
 				insertShift(remainder, index);
@@ -104,7 +95,7 @@ public class QuotientFilter {
 		}
 	}
 
-    public void insertShift(short remainder, int index) throws IOException {
+    public void insertShift(int remainder, int index) throws IOException {
         Integer runStart = 0;
         Integer position = index;
         boolean atStart = true;
@@ -114,17 +105,17 @@ public class QuotientFilter {
         Slot newSlot = new Slot(remainder, md);
         
         runStart = findRunStart(index);
-        Slot currentSlot = set.get(runStart);
+        Slot currentSlot = set[runStart];
         while ((remainder > currentSlot.getRemainder()) && currentSlot.getMetadata().getOccupied()) {
         	atStart = false;
         	position++;
         	subtract = true;
-        	currentSlot = set.get(position);
+        	currentSlot = set[position];
         }
         
         if(subtract)
         	position--;
-        Slot prevSlot = set.get(position);
+        Slot prevSlot = set[position];
         if(prevSlot.getMetadata().getShifted())
         	newSlot.getMetadata().setShifted();
         
@@ -133,7 +124,7 @@ public class QuotientFilter {
         if(!atStart) {
         	newSlot.getMetadata().setContinuation();
         }
-        set.set(position, newSlot);
+        set[position] = newSlot;
     }
     
     public void shiftRight(int index) {
@@ -143,55 +134,61 @@ public class QuotientFilter {
     	boolean setContinuation = true;
     	
     	do { 
-    		currentSlot = set.get(index % getCapacity());
-    		nextSlot = set.get((index+1) % getCapacity());
+    		currentSlot = set[index % getCapacity()];
+    		nextSlot = set[(index+1) % getCapacity()];
     		temp = nextSlot;
     		// nextSlot = currentSlot;
     		currentSlot.getMetadata().setShifted();
     		currentSlot.getMetadata().setContinuation();
-    		set.set(index+1 % getCapacity(), currentSlot);
+    		set[index+1 % getCapacity()] = currentSlot;
     		
     		index++;
-    	} while (set.get(index+1 % getCapacity()).getMetadata().getOccupied());
+    	} while (set[index+1 % getCapacity()].getMetadata().getOccupied());
     	
     	if(temp.getMetadata().getOccupied()) {
-    		set.set(index % getCapacity(), temp);
+    		set[index % getCapacity()] =  temp;
     	}
     }
 
     public void deleteShift(int index) throws IOException {       
     	Slot slot, nextSlot; 
     	do {
-    		slot = set.get(index);
-    		nextSlot = set.get((index++) % getCapacity());
+    		slot = set[index];
+    		nextSlot = set[(index++) % getCapacity()];
     		slot = nextSlot;
     	}while(!slot.getMetadata().getOccupied());
     }
 	
-	public void delete(Object obj) throws Exception {
-		int index = Utils.getIndex(obj, getCapacity());
+	public void delete(long hash) throws Exception {
+		int index = Utils.getIndex(hash, getCapacity());
 		int foundIndex;
-		foundIndex = lookup(index, Utils.getRemainder(obj));
+		foundIndex = lookup(index, Utils.getRemainder(hash));
 		if(foundIndex != -1) {
 			// No slots to move, inserting empty slot
-			if(!set.get((foundIndex+1) % getCapacity()).getMetadata().getOccupied()) {
+			if(!set[(foundIndex+1) % getCapacity()].getMetadata().getOccupied()) {
 				Slot newSlot = new Slot();
-				set.set(foundIndex, newSlot);
+				set[foundIndex] =  newSlot;
 			}
 			deleteShift(foundIndex);
 		}
 		else {
-			LOG.debug("Unable to delete, no object: " + obj.toString());
+			LOG.debug("Unable to delete, no hash: " + hash);
 		}
 	}
 
-	public int lookup(Object obj) {
-		return lookup(Utils.getIndex(obj, getCapacity()), Utils.getRemainder(obj));
+	public int getNumberOfOccurences(long hash) {
+		int index = lookup(hash);
+
+		return index == -1 ? 0 : set[index].getCount();
+	}
+
+	private int lookup(long hash) {
+		return lookup(Utils.getIndex(hash, getCapacity()), Utils.getRemainder(hash));
 	}
 	
-	public int lookup(int index, short remainder) {	
+	int lookup(int index, int remainder) {
 		int currentIndex = index;
-		Slot currentSlot = set.get(currentIndex);
+		Slot currentSlot = set[currentIndex];
         int runStart = 0;
         
 		if(currentSlot.getMetadata().isClear())
@@ -202,9 +199,9 @@ public class QuotientFilter {
 		return checkQuotient(runStart, remainder);	
 	}
 	
-	private int checkQuotient(int runStart, short remainder) {
+	private int checkQuotient(int runStart, int remainder) {
 		int currentIndex = runStart;
-		Slot slot = set.get(runStart);
+		Slot slot = set[runStart];
 		
 		do {
 			if (slot.getRemainder() == remainder) {
@@ -216,7 +213,7 @@ public class QuotientFilter {
 			currentIndex++;
 			if(currentIndex >= getCapacity()) 
 				currentIndex = 0;
-			slot = set.get(currentIndex);
+			slot = set[currentIndex];
 		} while(slot.getMetadata().getContinuation());
 		
 		// Did not find the remainder in the run, false
@@ -229,7 +226,7 @@ public class QuotientFilter {
 		Slot slot = new Slot(); 
 		
 		while (true) {
-			slot = set.get(currentIndex);
+			slot = set[currentIndex];
 			if(slot.getMetadata().getOccupied()) 
 				isOccupiedCount++;
 			if(!slot.getMetadata().getShifted()) 
@@ -241,7 +238,7 @@ public class QuotientFilter {
 		
 		// currentIndex is now the start of the CLUSTER
 		while(true) {
-			slot = set.get(currentIndex);
+			slot = set[currentIndex];
 			if (!slot.getMetadata().getContinuation()) 
 				isContinuationCount++;
 			if(isOccupiedCount <= isContinuationCount) {
@@ -288,13 +285,9 @@ public class QuotientFilter {
 		QuotientFilter qf = new QuotientFilter(45);
 		LOG.error("ERROR logging");
 		System.out.println(qf.hashCode());
-		
-		System.out.println(Integer.toBinaryString(qf.hashCode()));
-		System.out.println(Integer.toBinaryString(0xFFFF & Utils.getQuotient(qf)));
-		System.out.println(Integer.toBinaryString(0xFFFF & Utils.getRemainder(qf)));
-		
-		int value = 222;
-		String stringInput = "hello world";
+
+		long value = 222;
+		long stringInput = "hello world".hashCode();
 		long longval = 4444;
 		
 		qf.insert(value);

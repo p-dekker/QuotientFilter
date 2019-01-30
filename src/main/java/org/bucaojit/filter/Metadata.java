@@ -40,11 +40,11 @@ public interface Metadata {
 	
 	public void setMetadata(T metadata);
 	*/
-	public Boolean getOccupied();
+	public boolean getOccupied();
 	
-	public Boolean getShifted();
+	public boolean getShifted();
 	
-	public Boolean getContinuation();
+	public boolean getContinuation();
 	
 	public void setOccupied() ;
 	
@@ -58,5 +58,5 @@ public interface Metadata {
 	
 	public void clearShifted();
 	
-	public Boolean isClear();
+	public boolean isClear();
 }

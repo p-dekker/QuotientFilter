@@ -21,30 +21,31 @@ package org.bucaojit.filter;
 // Author: Oliver
 
 public class Slot {
-	private Short remainder;
+	private int remainder;
 	private Metadata metadata;
+	private int count;
 	
 	public Slot() {
 		this.remainder = -1;
 		this.metadata = new MetadataBitSet();
+		this.count = 0;
 	}
 	
 	public Slot(short remainder) {
 		this.remainder = remainder;	
 		this.metadata = new MetadataBitSet();
-		// this.metadata = new Metadata();
 	}
 	
 	public Slot(Metadata metadata) {	
 		this.metadata = metadata;
 	}
 	
-	public Slot(short remainder, Metadata metadata) {
+	public Slot(int remainder, Metadata metadata) {
 		this.remainder = remainder;
 		this.metadata = metadata;
 	}
 	
-	public short getRemainder() {
+	public int getRemainder() {
 		return remainder;
 	}
 	
@@ -52,13 +53,19 @@ public class Slot {
 		return metadata;
 	}
 	
-	public void setRemainder(short remainder) {
+	public void setRemainder(int remainder) {
 		this.remainder = remainder;		
 	}
 	
 	public void setMetadata(Metadata metadata) {
 		this.metadata = metadata;
 	}
-	
-		
+
+	public void increase() {
+		this.count++;
+	}
+
+	public int getCount() {
+		return metadata.isClear() ? 0 : count +1;
+	}
 }
