@@ -66,10 +66,10 @@ public class QuotientFilter {
 		this.set[index] = slot;
 	}
 
-	public void insert(long hash) throws Exception{
+	public void insert(long hash) {
 		
 		if(isFull()) {
-			throw new IOException("ERROR: Quotient Filter has reached capacity");
+			throw new IllegalStateException("ERROR: Quotient Filter has reached capacity");
 		}
 		int index = Utils.getIndex(hash, getCapacity());
 		Slot currentSlot = set[index];
@@ -95,7 +95,7 @@ public class QuotientFilter {
 		}
 	}
 
-    public void insertShift(int remainder, int index) throws IOException {
+    public void insertShift(int remainder, int index)  {
         Integer runStart = 0;
         Integer position = index;
         boolean atStart = true;
