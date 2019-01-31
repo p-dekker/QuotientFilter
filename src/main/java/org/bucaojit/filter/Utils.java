@@ -3,8 +3,8 @@ package org.bucaojit.filter;
 public class Utils {
 	
 	public static int getQuotient(long hash) {
-		hash = Math.abs(hash);
-		return (int) hash >>> 32;
+		hash &= Long.MAX_VALUE;
+		return (int) (hash >>> 32);
 	}
 	
 	public static int getRemainder(long hash) {
